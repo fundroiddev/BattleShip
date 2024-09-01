@@ -28,6 +28,9 @@ class Player(
         playerBoard.board[x][y] = Mark.SHIP_DECK
     }
 
+    fun isEmpty(x: Int, y: Int): Boolean {
+        return playerBoard.board[x][y] == Mark.NEW
+    }
 
     fun printGameBoards() {
         println("Ваша доска")

@@ -3,6 +3,7 @@ import handlers.UiPrinter
 import model.GameBoard
 import model.Mark
 import model.Player
+import kotlin.random.Random
 
 fun main() {
     println("Введите количество кораблей")
@@ -10,11 +11,25 @@ fun main() {
     println("Введите размер доски")
     val boardSize = readln().toInt()
 
+    val playerBoard = GameBoard(boardSize)
+
+    val enemyBoard = GameBoard(boardSize)
+
     val player = Player(
-        GameBoard(boardSize),
-        GameBoard(boardSize),
+        playerBoard,
+        enemyBoard,
         shipsForPlayer,
     )
+
+    val enemy = Player(
+        enemyBoard,
+        playerBoard,
+        shipsForPlayer,
+    )
+
+    val uiPrinter = UiPrinter(player.playerBoard, player.shotBoard)
+    uiPrinter.printGameBoards()
+
     val coordinateConverter = CoordinateConverter()
 
     println("Расстановка кораблей игрока")
@@ -25,7 +40,18 @@ fun main() {
         val x = shipCoordinate[1].digitToInt()
         player.placeShip(x, y)
     }
-    val uiPrinter = UiPrinter(player.playerBoard, player.shotBoard)
+
+    println("Расстановка кораблей противника")
+    val random = Random.Default
+    for (i in 1..shipsForPlayer) {
+        var x = 0
+        var y = 0
+        do {
+            x = random.nextInt(boardSize)
+            y = random.nextInt(boardSize)
+        } while (!enemy.isEmpty(x, y))
+        enemy.placeShip(x,y)
+    }
     uiPrinter.printGameBoards()
     while (!player.shotBoard.board.all { it.all { mark -> mark == Mark.SHOOTED } }) {
         println("Введите координаты выстрела в формате a1")
