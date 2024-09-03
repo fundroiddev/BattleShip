@@ -5,7 +5,7 @@ import model.Mark
 
 class ShipPlacer(
     val playerBoard: GameBoard,
-    val shotBoard: GameBoard,
+    private val shotBoard: GameBoard,
 ) {
 
     fun placeShip(x: Int, y: Int) {
