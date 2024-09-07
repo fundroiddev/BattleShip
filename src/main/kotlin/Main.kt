@@ -61,7 +61,7 @@ fun main() {
     }
 
     uiPrinter.gameOver()
-    uiPrinter.printAllBoards(playerBoard, enemyBoard)
+    uiPrinter.printGameBoards(playerBoard, enemyBoard, true)
     if (player.isLooser()) {
         uiPrinter.printEnemyWins()
     } else {

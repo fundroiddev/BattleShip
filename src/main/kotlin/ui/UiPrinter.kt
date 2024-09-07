@@ -5,20 +5,16 @@ import model.Mark
 
 class UiPrinter {
 
-    fun printGameBoards(playerGameBoard: GameBoard, enemyGameBoard: GameBoard) {
+    fun printGameBoards(playerGameBoard: GameBoard, enemyGameBoard: GameBoard, showEnemyShips: Boolean = false) {
         println("Ваша доска")
         printPlayerBoard(playerGameBoard)
         println()
         println("Доска противника")
-        printEnemyBoard(enemyGameBoard)
-    }
-
-    fun printAllBoards(playerGameBoard: GameBoard, enemyGameBoard: GameBoard) {
-        println("Ваша доска")
-        printPlayerBoard(playerGameBoard)
-        println()
-        println("Доска противника")
-        printPlayerBoard(enemyGameBoard)
+        if (showEnemyShips) {
+            printPlayerBoard(enemyGameBoard)
+        } else {
+            printEnemyBoard(enemyGameBoard)
+        }
     }
 
     private fun printEnemyBoard(enemyGameBoard: GameBoard) {

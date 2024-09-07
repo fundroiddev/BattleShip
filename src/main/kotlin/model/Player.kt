@@ -14,9 +14,7 @@ class Player(
     }
 
     fun isLooser(): Boolean {
-        return playerBoard.board.all { markList ->
-            markList.all { mark -> mark != Mark.SHIP_DECK }
-        }
+        return playerBoard.board.flatten().none { it == Mark.SHIP_DECK }
     }
 
     fun isNotShoted(x: Int, y: Int): Boolean {
