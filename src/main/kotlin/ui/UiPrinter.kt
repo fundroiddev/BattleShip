@@ -69,8 +69,8 @@ class UiPrinter {
         println("Расстановка кораблей игрока")
     }
 
-    fun enterCoordinateShip() {
-        println("Введите координаты корабля в формате a0")
+    fun placeShots() {
+        println("Начинается бой, следуйте инструкциям")
     }
 
     fun shipAlreadyPlacedError() {
@@ -81,16 +81,12 @@ class UiPrinter {
         println("Ошибка: введены некорректные координаты")
     }
 
-    fun enterShot() {
-        println("Введите координаты выстрела в формате a0")
+    fun enterCoordinates() {
+        println("Введите координаты в формате a0")
     }
 
     fun alreadyShotedError() {
         println("Ошибка: по этим координатам уже был произведен выстрел. Попробуйте еще раз")
-    }
-
-    fun enemyShot(x: Int, y: Int) {
-        println("Противник стреляет в $y, $x")
     }
 
     fun gameOver() {

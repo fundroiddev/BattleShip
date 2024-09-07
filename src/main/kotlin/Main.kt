@@ -29,18 +29,34 @@ fun main() {
 
     uiPrinter.printGameBoards(playerBoard, enemyBoard)
     uiPrinter.placeShips()
-    for (i in 1..shipsForPlayer) {
-        playerPlaceShip(uiPrinter, coordinateConverter, player)
 
-        enemyPlaceShip(random, boardSize, enemy)
+    for (i in 1..shipsForPlayer) {
+        playerPlaceMark(
+            uiPrinter,
+            coordinateConverter,
+            player::isNewSection,
+            player::placeShip,
+            uiPrinter::shipAlreadyPlacedError
+        )
+
+        enemyPlaceMark(random, boardSize, enemy::isNewSection, enemy::placeShip)
     }
+
     uiPrinter.printGameBoards(playerBoard, enemyBoard)
+    uiPrinter.placeShots()
 
     while (gameContinue(player, enemy)) {
-        playerPlaceShot(uiPrinter, coordinateConverter, player)
+        playerPlaceMark(
+            uiPrinter,
+            coordinateConverter,
+            player::isNotShoted,
+            player::placeShot,
+            uiPrinter::alreadyShotedError
+        )
         uiPrinter.printGameBoards(playerBoard, enemyBoard)
 
-        enemyPlaceShot(random, boardSize, enemy, uiPrinter)
+        enemyPlaceMark(random, boardSize, enemy::isNotShoted, enemy::placeShot)
+
         uiPrinter.printGameBoards(playerBoard, enemyBoard)
     }
 
@@ -53,77 +69,40 @@ fun main() {
     }
 }
 
-private fun enemyPlaceShip(
+private fun enemyPlaceMark(
     random: Random.Default,
     boardSize: Int,
-    enemy: Player,
+    checkCoordinateMethod: (x: Int, y: Int) -> Boolean,
+    placeMarkMethod: (x: Int, y: Int) -> Unit,
 ) {
     var x: Int
     var y: Int
     do {
         x = random.nextInt(boardSize)
         y = random.nextInt(boardSize)
-    } while (!enemy.isNewSection(x, y))
-    enemy.placeShip(x, y)
+    } while (!checkCoordinateMethod(x, y))
+    placeMarkMethod(x, y)
 }
 
-private fun enemyPlaceShot(
-    random: Random.Default,
-    boardSize: Int,
-    enemy: Player,
-    uiPrinter: UiPrinter,
-) {
-    var x: Int
-    var y: Int
-    do {
-        x = random.nextInt(boardSize)
-        y = random.nextInt(boardSize)
-    } while (!enemy.isNotShoted(x, y))
-    enemy.placeShot(x, y)
-    uiPrinter.enemyShot(x, y)
-}
-
-private fun playerPlaceShot(
+private fun playerPlaceMark(
     uiPrinter: UiPrinter,
     coordinateConverter: CoordinateConverter,
-    player: Player
+    checkCoordinateMethod: (x: Int, y: Int) -> Boolean,
+    placeMarkMethod: (x: Int, y: Int) -> Unit,
+    errorMethod: () -> Unit,
 ) {
     var validInput = false
     while (!validInput) {
-        uiPrinter.enterShot()
+        uiPrinter.enterCoordinates()
         val shipCoordinate = readln()
         if (coordinateConverter.isValidCoordinate(shipCoordinate)) {
             val y = coordinateConverter.symbolToDigit(shipCoordinate[0])
             val x = shipCoordinate[1].digitToInt()
-            if (player.isNotShoted(x, y)) {
-                player.placeShot(x, y)
+            if (checkCoordinateMethod(x, y)) {
+                placeMarkMethod(x, y)
                 validInput = true
             } else {
-                uiPrinter.alreadyShotedError()
-            }
-        } else {
-            uiPrinter.wrongFormatError()
-        }
-    }
-}
-
-private fun playerPlaceShip(
-    uiPrinter: UiPrinter,
-    coordinateConverter: CoordinateConverter,
-    player: Player
-) {
-    var validInput = false
-    while (!validInput) {
-        uiPrinter.enterCoordinateShip()
-        val shipCoordinate = readln()
-        if (coordinateConverter.isValidCoordinate(shipCoordinate)) {
-            val y = coordinateConverter.symbolToDigit(shipCoordinate[0])
-            val x = shipCoordinate[1].digitToInt()
-            if (player.isNewSection(x, y)) {
-                player.placeShip(x, y)
-                validInput = true
-            } else {
-                uiPrinter.shipAlreadyPlacedError()
+                errorMethod()
             }
         } else {
             uiPrinter.wrongFormatError()
