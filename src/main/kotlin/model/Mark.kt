@@ -2,7 +2,7 @@ package model
 
 enum class Mark(val symbol: String) {
     NEW("□"),
-    SHOOTED("*"),
+    SHOT("*"),
     DESTROYED("X"),
     SHIP_DECK("■"),
 }

@@ -8,14 +8,15 @@ class CoordinateConverter(private val boardSize: Int) {
         if (digit in 0 until boardSize) {
             return digit
         } else {
-            throw IllegalArgumentException("Некорректная буква: $symbol. Введите букву от 'a' до '${'a' + boardSize - 1}'.")
+            throw IllegalArgumentException("Некорректная буква : $symbol. " +
+                    "Введите букву от 'a' до '${'a' + boardSize - 1}'.")
         }
     }
 
-    fun isValidCoordinate(coordinate: String): Boolean {
-        if (coordinate.length != 2) return false
-        val symbol = coordinate[0].lowercaseChar()
-        val digit = coordinate[1].digitToIntOrNull() ?: return false
-        return symbol in 'a' until 'a' + this.boardSize && digit in 0 until this.boardSize
+    fun isValidCoordinate(shipCoordinate: String): Boolean {
+        if (shipCoordinate.length != 2) return false
+        val symbol = shipCoordinate[0].lowercaseChar()
+        val digit = shipCoordinate[1].digitToIntOrNull() ?: return false
+        return symbol in 'a' until 'a' + boardSize && digit in 0 until boardSize
     }
 }
