@@ -30,62 +30,17 @@ fun main() {
     uiPrinter.printGameBoards(playerBoard, enemyBoard)
     uiPrinter.placeShips()
     for (i in 1..shipsForPlayer) {
-        var validInput = false
-        while (!validInput) {
-            uiPrinter.enterCoordinateShip()
-            val shipCoordinate = readln()
-            if (coordinateConverter.isValidCoordinate(shipCoordinate)) {
-                val y = coordinateConverter.symbolToDigit(shipCoordinate[0])
-                val x = shipCoordinate[1].digitToInt()
-                if (player.isNewSection(x, y)) {
-                    player.placeShip(x, y)
-                    validInput = true
-                } else {
-                    uiPrinter.shipAlreadyPlacedError()
-                }
-            } else {
-                uiPrinter.wrongFormatError()
-            }
-        }
+        playerPlaceShip(uiPrinter, coordinateConverter, player)
 
-        var x: Int
-        var y: Int
-        do {
-            x = random.nextInt(boardSize)
-            y = random.nextInt(boardSize)
-        } while (!enemy.isNewSection(x, y))
-        enemy.placeShip(x, y)
+        enemyPlaceShip(random, boardSize, enemy)
     }
     uiPrinter.printGameBoards(playerBoard, enemyBoard)
 
     while (gameContinue(player, enemy)) {
-        var validInput = false
-        while (!validInput) {
-            uiPrinter.enterShot()
-            val shipCoordinate = readln()
-            if (coordinateConverter.isValidCoordinate(shipCoordinate)) {
-                val y = coordinateConverter.symbolToDigit(shipCoordinate[0])
-                val x = shipCoordinate[1].digitToInt()
-                if (player.isNotShoted(x, y)) {
-                    player.placeShot(x, y)
-                    validInput = true
-                } else {
-                    uiPrinter.alreadyShotedError()
-                }
-            } else {
-                uiPrinter.wrongFormatError()
-            }
-        }
+        playerPlaceShot(uiPrinter, coordinateConverter, player)
         uiPrinter.printGameBoards(playerBoard, enemyBoard)
 
-        var x: Int
-        var y: Int
-        do {
-            x = random.nextInt(boardSize)
-            y = random.nextInt(boardSize)
-        } while (!enemy.isNotShoted(x, y))
-        enemy.placeShot(x, y)
-        uiPrinter.enemyShot(x, y)
+        enemyPlaceShot(random, boardSize, enemy, uiPrinter)
         uiPrinter.printGameBoards(playerBoard, enemyBoard)
     }
 
@@ -95,6 +50,84 @@ fun main() {
         uiPrinter.printEnemyWins()
     } else {
         uiPrinter.printPlayerWin()
+    }
+}
+
+private fun enemyPlaceShip(
+    random: Random.Default,
+    boardSize: Int,
+    enemy: Player,
+) {
+    var x: Int
+    var y: Int
+    do {
+        x = random.nextInt(boardSize)
+        y = random.nextInt(boardSize)
+    } while (!enemy.isNewSection(x, y))
+    enemy.placeShip(x, y)
+}
+
+private fun enemyPlaceShot(
+    random: Random.Default,
+    boardSize: Int,
+    enemy: Player,
+    uiPrinter: UiPrinter,
+) {
+    var x: Int
+    var y: Int
+    do {
+        x = random.nextInt(boardSize)
+        y = random.nextInt(boardSize)
+    } while (!enemy.isNotShoted(x, y))
+    enemy.placeShot(x, y)
+    uiPrinter.enemyShot(x, y)
+}
+
+private fun playerPlaceShot(
+    uiPrinter: UiPrinter,
+    coordinateConverter: CoordinateConverter,
+    player: Player
+) {
+    var validInput = false
+    while (!validInput) {
+        uiPrinter.enterShot()
+        val shipCoordinate = readln()
+        if (coordinateConverter.isValidCoordinate(shipCoordinate)) {
+            val y = coordinateConverter.symbolToDigit(shipCoordinate[0])
+            val x = shipCoordinate[1].digitToInt()
+            if (player.isNotShoted(x, y)) {
+                player.placeShot(x, y)
+                validInput = true
+            } else {
+                uiPrinter.alreadyShotedError()
+            }
+        } else {
+            uiPrinter.wrongFormatError()
+        }
+    }
+}
+
+private fun playerPlaceShip(
+    uiPrinter: UiPrinter,
+    coordinateConverter: CoordinateConverter,
+    player: Player
+) {
+    var validInput = false
+    while (!validInput) {
+        uiPrinter.enterCoordinateShip()
+        val shipCoordinate = readln()
+        if (coordinateConverter.isValidCoordinate(shipCoordinate)) {
+            val y = coordinateConverter.symbolToDigit(shipCoordinate[0])
+            val x = shipCoordinate[1].digitToInt()
+            if (player.isNewSection(x, y)) {
+                player.placeShip(x, y)
+                validInput = true
+            } else {
+                uiPrinter.shipAlreadyPlacedError()
+            }
+        } else {
+            uiPrinter.wrongFormatError()
+        }
     }
 }
 
