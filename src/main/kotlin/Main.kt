@@ -47,10 +47,7 @@ fun main() {
                 uiPrinter.wrongFormatError()
             }
         }
-    }
-    uiPrinter.printGameBoards(playerBoard, enemyBoard)
 
-    for (i in 1..shipsForPlayer) {
         var x: Int
         var y: Int
         do {
@@ -59,6 +56,7 @@ fun main() {
         } while (!enemy.isNewSection(x, y))
         enemy.placeShip(x, y)
     }
+    uiPrinter.printGameBoards(playerBoard, enemyBoard)
 
     while (gameContinue(player, enemy)) {
         var validInput = false
