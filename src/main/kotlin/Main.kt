@@ -1,14 +1,16 @@
 import handlers.CoordinateConverter
+import model.Coordinate
 import model.GameBoard
 import model.Player
+import model.Ship
 import ui.UiPrinter
 import kotlin.random.Random
+import kotlin.reflect.KFunction0
+import kotlin.reflect.KFunction1
 
 fun main() {
     val uiPrinter = UiPrinter()
-    uiPrinter.enterShipNumber()
-    val shipsForPlayer = readln().toInt()
-
+    val fleet = listOf(1, 1, 1, 1, 2, 2, 2, 3, 3, 4)
     uiPrinter.enterGameboardSize()
     val boardSize = readln().toInt()
     val playerBoard = GameBoard(size = boardSize)
@@ -30,16 +32,17 @@ fun main() {
     uiPrinter.printGameBoards(playerBoard, enemyBoard)
     uiPrinter.placeShips()
 
-    for (i in 1..shipsForPlayer) {
-        playerPlaceMark(
+    for (shipSize in fleet) {
+        playerPlaceShip(
             uiPrinter,
             coordinateConverter,
-            player::isNewSection,
+            player::canPlaceShip,
             player::placeShip,
-            uiPrinter::shipAlreadyPlacedError
+            uiPrinter::shipAlreadyPlacedError,
+            shipSize,
         )
 
-        enemyPlaceMark(random, boardSize, enemy::isNewSection, enemy::placeShip)
+        enemyPlaceShip(random, boardSize, enemy::isNewSection, enemy::placeShip)
     }
 
     uiPrinter.printGameBoards(playerBoard, enemyBoard)
@@ -69,26 +72,96 @@ fun main() {
     }
 }
 
+fun enemyPlaceShip(
+    random: Random.Default,
+    boardSize: Int,
+    checkCoordinateMethod: (ship: Ship) -> Boolean,
+    placeShipMethod: (ship: Ship) -> Unit,
+    shipSize: Int,
+) {
+    var validInput = false
+    while (!validInput) {
+        val startX = random.nextInt(boardSize)
+        val startY = random.nextInt(boardSize)
+        val isHorizontal = random.nextBoolean()
+
+        val coordinates = mutableListOf<Coordinate>()
+
+        for (i in 0 until shipSize) {
+            val coordinate = if (isHorizontal) {
+                Coordinate(startX, startY + i)
+            } else {
+                Coordinate(startX + i, startY)
+            }
+            coordinates.add(coordinate)
+        }
+
+        val ship = Ship(size = shipSize, coordinates = coordinates)
+        if (checkCoordinateMethod(ship)) {
+            placeShipMethod(ship)
+            validInput = true
+        }
+    }
+}
+
+fun playerPlaceShip(
+    uiPrinter: UiPrinter,
+    coordinateConverter: CoordinateConverter,
+    checkCoordinateMethod: (ship: Ship) -> Boolean,
+    placeMarkMethod: (ship: Ship) -> Unit,
+    errorMethod: () -> Unit,
+    shipSize: Int
+) {
+    val validInput = false
+    while (!validInput) {
+        uiPrinter.enterCoordinates()
+        val startCoordinate = readln()
+
+        uiPrinter.enterShipdirection()
+        val direction = readln()
+
+        val startX = startCoordinate[0].digitToInt()
+        val startY = coordinateConverter.symbolToDigit(startCoordinate[0])
+        val coordinates = mutableListOf<Coordinate>()
+        for (i in 0 until shipSize) {
+            val coordinate = if (direction == "h") {
+                Coordinate(startX, startY + i)
+            } else {
+                Coordinate(startX + i, startY)
+            }
+            coordinates.add(coordinate)
+        }
+
+        val ship = Ship(size = shipSize, coordinates = coordinates)
+        if (checkCoordinateMethod(ship)) {
+            placeMarkMethod(ship)
+            validInput = true
+        } else {
+            errorMethod()
+        }
+    }
+}
+
 private fun enemyPlaceMark(
     random: Random.Default,
     boardSize: Int,
-    checkCoordinateMethod: (x: Int, y: Int) -> Boolean,
-    placeMarkMethod: (x: Int, y: Int) -> Unit,
+    checkCoordinateMethod: (coordinate: Coordinate) -> Boolean,
+    placeMarkMethod: (coordinate: Coordinate) -> Unit,
 ) {
     var x: Int
     var y: Int
     do {
         x = random.nextInt(boardSize)
         y = random.nextInt(boardSize)
-    } while (!checkCoordinateMethod(x, y))
-    placeMarkMethod(x, y)
+    } while (!checkCoordinateMethod(Coordinate(x, y)))
+    placeMarkMethod(Coordinate(x, y))
 }
 
 private fun playerPlaceMark(
     uiPrinter: UiPrinter,
     coordinateConverter: CoordinateConverter,
-    checkCoordinateMethod: (x: Int, y: Int) -> Boolean,
-    placeMarkMethod: (x: Int, y: Int) -> Unit,
+    checkCoordinateMethod: (coordinate: Coordinate) -> Boolean,
+    placeMarkMethod: (coordinate: Coordinate) -> Unit,
     errorMethod: () -> Unit,
 ) {
     var validInput = false
@@ -98,8 +171,8 @@ private fun playerPlaceMark(
         if (coordinateConverter.isValidCoordinate(shipCoordinate)) {
             val y = coordinateConverter.symbolToDigit(shipCoordinate[0])
             val x = shipCoordinate[1].digitToInt()
-            if (checkCoordinateMethod(x, y)) {
-                placeMarkMethod(x, y)
+            if (checkCoordinateMethod(Coordinate(x, y))) {
+                placeMarkMethod(Coordinate(x, y))
                 validInput = true
             } else {
                 errorMethod()

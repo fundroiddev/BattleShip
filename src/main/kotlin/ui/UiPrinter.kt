@@ -97,4 +97,8 @@ class UiPrinter {
     fun printPlayerWin() {
         println("Поздравляю! Ты победил и Пистолетов обнимает тебя!!!11")
     }
+
+    fun enterShipdirection() {
+        println("Введите расположение корабля h - горизонтальное, v - вертикальное")
+    }
 }
