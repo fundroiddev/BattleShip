@@ -5,12 +5,10 @@ import model.Player
 import model.Ship
 import ui.UiPrinter
 import kotlin.random.Random
-import kotlin.reflect.KFunction0
-import kotlin.reflect.KFunction1
 
 fun main() {
     val uiPrinter = UiPrinter()
-    val fleet = listOf(1, 1, 1, 1, 2, 2, 2, 3, 3, 4)
+
     uiPrinter.enterGameboardSize()
     val boardSize = readln().toInt()
     val playerBoard = GameBoard(size = boardSize)
@@ -29,37 +27,22 @@ fun main() {
     val random = Random.Default
     val coordinateConverter = CoordinateConverter(boardSize)
 
+    val fleet = listOf(1, 2)
+
     uiPrinter.printGameBoards(playerBoard, enemyBoard)
     uiPrinter.placeShips()
-
-    for (shipSize in fleet) {
-        playerPlaceShip(
-            uiPrinter,
-            coordinateConverter,
-            player::canPlaceShip,
-            player::placeShip,
-            uiPrinter::shipAlreadyPlacedError,
-            shipSize,
-        )
-
-        enemyPlaceShip(random, boardSize, enemy::isNewSection, enemy::placeShip)
+    fleet.forEach { ship ->
+        playerPlaceShip(uiPrinter, coordinateConverter, player, ship)
+        uiPrinter.printGameBoards(playerBoard, enemyBoard)
+        enemyPlaceShip(random, boardSize, enemy, ship)
     }
-
     uiPrinter.printGameBoards(playerBoard, enemyBoard)
-    uiPrinter.placeShots()
 
     while (gameContinue(player, enemy)) {
-        playerPlaceMark(
-            uiPrinter,
-            coordinateConverter,
-            player::isNotShoted,
-            player::placeShot,
-            uiPrinter::alreadyShotedError
-        )
+        playerPlaceShot(uiPrinter, coordinateConverter, player, enemy)
         uiPrinter.printGameBoards(playerBoard, enemyBoard)
 
-        enemyPlaceMark(random, boardSize, enemy::isNotShoted, enemy::placeShot)
-
+        enemyPlaceShot(random, boardSize, enemy, player, uiPrinter)
         uiPrinter.printGameBoards(playerBoard, enemyBoard)
     }
 
@@ -72,110 +55,140 @@ fun main() {
     }
 }
 
-fun enemyPlaceShip(
-    random: Random.Default,
-    boardSize: Int,
-    checkCoordinateMethod: (ship: Ship) -> Boolean,
-    placeShipMethod: (ship: Ship) -> Unit,
+private fun playerPlaceShip(
+    uiPrinter: UiPrinter,
+    coordinateConverter: CoordinateConverter,
+    player: Player,
     shipSize: Int,
 ) {
     var validInput = false
     while (!validInput) {
-        val startX = random.nextInt(boardSize)
-        val startY = random.nextInt(boardSize)
-        val isHorizontal = random.nextBoolean()
-
-        val coordinates = mutableListOf<Coordinate>()
-
-        for (i in 0 until shipSize) {
-            val coordinate = if (isHorizontal) {
-                Coordinate(startX, startY + i)
-            } else {
-                Coordinate(startX + i, startY)
-            }
-            coordinates.add(coordinate)
-        }
-
-        val ship = Ship(size = shipSize, coordinates = coordinates)
-        if (checkCoordinateMethod(ship)) {
-            placeShipMethod(ship)
-            validInput = true
-        }
-    }
-}
-
-fun playerPlaceShip(
-    uiPrinter: UiPrinter,
-    coordinateConverter: CoordinateConverter,
-    checkCoordinateMethod: (ship: Ship) -> Boolean,
-    placeMarkMethod: (ship: Ship) -> Unit,
-    errorMethod: () -> Unit,
-    shipSize: Int
-) {
-    val validInput = false
-    while (!validInput) {
-        uiPrinter.enterCoordinates()
+        uiPrinter.placeShip(shipSize)
         val startCoordinate = readln()
+        if (!coordinateConverter.isValidCoordinate(startCoordinate)) {
+            uiPrinter.wrongFormatError()
+            continue
+        }
 
-        uiPrinter.enterShipdirection()
-        val direction = readln()
-
-        val startX = startCoordinate[0].digitToInt()
+        val startX = startCoordinate[1].digitToInt()
         val startY = coordinateConverter.symbolToDigit(startCoordinate[0])
+
         val coordinates = mutableListOf<Coordinate>()
-        for (i in 0 until shipSize) {
-            val coordinate = if (direction == "h") {
-                Coordinate(startX, startY + i)
-            } else {
-                Coordinate(startX + i, startY)
-            }
-            coordinates.add(coordinate)
+
+        if (shipSize == 1) {
+            coordinates.add(Coordinate(startX, startY))
+        } else {
+            uiPrinter.enterDirection()
+            val direction = readln()
+
+            createCoordinatesForShip(shipSize, direction == HORIZONTAL, startX, startY, coordinates)
         }
 
         val ship = Ship(size = shipSize, coordinates = coordinates)
-        if (checkCoordinateMethod(ship)) {
-            placeMarkMethod(ship)
+
+        if (player.canPlaceShip(ship)) {
+            player.placeShip(ship)
             validInput = true
         } else {
-            errorMethod()
+            uiPrinter.shipPlacedError()
         }
     }
 }
 
-private fun enemyPlaceMark(
+private fun createCoordinatesForShip(
+    shipSize: Int,
+    isHorizontal: Boolean,
+    startX: Int,
+    startY: Int,
+    coordinates: MutableList<Coordinate>
+) {
+    for (i in 0 until shipSize) {
+        val coordinate = if (isHorizontal) {
+            Coordinate(startX, startY + i)
+        } else {
+            Coordinate(startX + i, startY)
+        }
+        coordinates.add(coordinate)
+    }
+}
+
+private fun enemyPlaceShip(
     random: Random.Default,
     boardSize: Int,
-    checkCoordinateMethod: (coordinate: Coordinate) -> Boolean,
-    placeMarkMethod: (coordinate: Coordinate) -> Unit,
+    enemy: Player,
+    shipSize: Int,
+) {
+    var placed = false
+    while (!placed) {
+        val x = random.nextInt(boardSize)
+        val y = random.nextInt(boardSize)
+        val isHorizontal = random.nextBoolean()
+        val coordinates = mutableListOf<Coordinate>()
+
+        createCoordinatesForShip(shipSize, isHorizontal, x, y, coordinates)
+
+        val ship = Ship(size = shipSize, coordinates = coordinates)
+
+        if (enemy.canPlaceShip(ship)) {
+            enemy.placeShip(ship)
+            placed = true
+        }
+    }
+}
+
+private fun enemyPlaceShot(
+    random: Random.Default,
+    boardSize: Int,
+    enemy: Player,
+    player: Player,
+    uiPrinter: UiPrinter,
 ) {
     var x: Int
     var y: Int
+
     do {
         x = random.nextInt(boardSize)
         y = random.nextInt(boardSize)
-    } while (!checkCoordinateMethod(Coordinate(x, y)))
-    placeMarkMethod(Coordinate(x, y))
+    } while (!enemy.isNotShoted(Coordinate(x, y)))
+
+    val isHit = enemy.placeShot(x,y)
+    if (isHit) {
+        val ship = player.findShipByCoordinate(x,y)
+        if (ship != null && player.isShipDestroyed(ship)) {
+            uiPrinter.yourShipDestroyed()
+        } else {
+            uiPrinter.yourShipHit()
+        }
+    }
 }
 
-private fun playerPlaceMark(
+private fun playerPlaceShot(
     uiPrinter: UiPrinter,
     coordinateConverter: CoordinateConverter,
-    checkCoordinateMethod: (coordinate: Coordinate) -> Boolean,
-    placeMarkMethod: (coordinate: Coordinate) -> Unit,
-    errorMethod: () -> Unit,
+    player: Player,
+    enemy: Player
 ) {
     var validInput = false
     while (!validInput) {
-        uiPrinter.enterCoordinates()
-        val shipCoordinate = readln()
-        if (coordinateConverter.isValidCoordinate(shipCoordinate)) {
-            val y = coordinateConverter.symbolToDigit(shipCoordinate[0])
-            val x = shipCoordinate[1].digitToInt()
-            if (checkCoordinateMethod(Coordinate(x, y))) {
-                placeMarkMethod(Coordinate(x, y))
+        uiPrinter.enterShot()
+        val shotCoordinate = readln()
+        if (coordinateConverter.isValidCoordinate(shotCoordinate)) {
+            val y = coordinateConverter.symbolToDigit(shotCoordinate[0])
+            val x = shotCoordinate[1].digitToInt()
+
+            if (player.isNotShoted(Coordinate(x,y))) {
+                val isHit = player.placeShot(x,y)
+                if (isHit) {
+                    val ship = enemy.findShipByCoordinate(x, y)
+                    if (ship != null && enemy.isShipDestroyed(ship)) {
+                        uiPrinter.shipDestroyed()
+                    } else {
+                        uiPrinter.shipHit()
+                    }
+                }
                 validInput = true
             } else {
-                errorMethod()
+                uiPrinter.alreadyShotedError()
             }
         } else {
             uiPrinter.wrongFormatError()
@@ -186,3 +199,5 @@ private fun playerPlaceMark(
 fun gameContinue(player: Player, enemy: Player): Boolean {
     return !player.isLooser() && !enemy.isLooser()
 }
+
+private const val HORIZONTAL = "h"
